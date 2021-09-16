@@ -44,15 +44,21 @@ var Settings = function() {
       $form.find("[name=inputTargetIdentifier]").val(target.identifier);
       $form.find("[name=inputTargetName]").val(target.name);
 
+      // TODO: We only support two attributes right now. Make this dynamic (add/remove rows)
+
       var i=0;
+      var $row;
       $.each(target.attributes, function(name, value){
-        
+
+        // get row
+        $row = $form.find(".row.attribute").eq(i++);
+
+        // set name
+        $row.find("[name='targetAttributeName[]']").val(name);
+
+        // set value
+        $row.find("[name='targetAttributeValue[]']").val(value);
       });
-/*
-      for (var i = 0; i < target.attributes.length; i++) {
-        $form.find("[name^=targetAttributeName]")[i].val(target.attributes[])
-      }
-*/
       
   }
 
