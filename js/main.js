@@ -41,6 +41,10 @@ var Settings = function() {
 
       var target = JSON.parse(_localStorage.getItem("target"));
 
+      if (! target) {
+        return;
+      }
+
       $form.find("[name=inputTargetIdentifier]").val(target.identifier);
       $form.find("[name=inputTargetName]").val(target.name);
 
