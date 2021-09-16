@@ -1,5 +1,3 @@
-
-
 var Settings = function() {
   var _localStorage = null;
 
@@ -66,6 +64,14 @@ var Settings = function() {
       
   }
 
+  var _getClientKey = function() {
+    return _localStorage.getItem("clientKey");
+  }
+
+  var _getTarget = function() {
+    return JSON.parse(_localStorage.getItem("target"));
+  }
+
   return {
 
     init : function($formSettings) {
@@ -75,15 +81,120 @@ var Settings = function() {
       $formSettings.submit(function (e) {
         e.preventDefault();
         _saveSettings($formSettings);
+
+        // refresh FF SDK
+        FF.reloadSDK();
       });
 
       _loadSettings($formSettings);
       
+    },
+    getClientKey : function() {
+      return _getClientKey();
+    },
+    getTarget : function() {
+      return _getTarget();
+    },
+    getOptions : function() {
+      return {
+        debug : true
+      };
     }
 
   }
 
 }();
 
+var FF = function() {
+  var _initialize = null;
+  var _Event = null;
+  var _settings = null;
+  var _sdk = null;
+  var _flagsView = null;
+  var _debugView = null;
+
+  
+  var _setupSDK = function() {
+
+    _sdk = _initialize(_settings.getClientKey(), _settings.getTarget(), _settings.getOptions());
+
+    // setup event listeners
+    _sdk.on(_Event.READY, flags => {
+      console.log("Event: READY", flags);
+      _flagsView.setFlags(flags);
+    });
+
+    _sdk.on(_Event.CHANGED, flagInfo => {
+      console.log("Event: CHANGED", flagInfo);
+      _flagsView.setFlagInfo(flagInfo);
+    });
+
+    _sdk.on(_Event.DISCONNECTED, () => {
+      console.log("Event: DISCONNECTED");
+    });
+
+    _sdk.on(_Event.ERROR, () => {
+      console.log("Event: ERROR");
+    });
+  }
+
+  return {
+
+    init : function(settings, flagsView, debugView) {
+      _settings = settings;
+      _flagsView = flagsView;
+      _debugView = debugView;
+    },
+
+    setFFSDK : function(initialize, Event) {
+      _initialize = initialize;
+      _Event = Event;
+
+      _setupSDK();
+    },
+
+    reloadSDK : function() {
+      _setupSDK();
+    }
+  }
+
+}();
+
+var FlagsView = function () {
+  var $view = null;
+
+
+  return {
+    init : function(view) {
+      $view = view.find('pre');
+    },
+    setFlags : function(flags) {
+
+    },
+    setFlagInfo : function(flagInfo) {
+      var log = [];
+      log.push((new Date).toISOString());
+      log.push(JSON.stringify(flagInfo));
+      log.push("\n");
+      
+      $view.append(log.join(" "));
+    }
+  }
+}();
+
+var DebugView = function() {
+  var $view = null;
+
+
+  return {
+    init : function(view) {
+      $view = view;
+    }
+  }
+}();
+
 var $formSettings = $("#formSettings");
 Settings.init($formSettings);
+FlagsView.init($("#flags-view"));
+DebugView.init($("#debug-view"));
+FF.init(Settings, FlagsView, DebugView);
