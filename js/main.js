@@ -116,25 +116,34 @@ var FF = function() {
   
   var _setupSDK = function() {
 
+    if (_sdk) {
+      _sdk.close();
+      _sdk = null;
+    }
+
     _sdk = _initialize(_settings.getClientKey(), _settings.getTarget(), _settings.getOptions());
 
     // setup event listeners
     _sdk.on(_Event.READY, flags => {
       console.log("Event: READY", flags);
       _flagsView.setFlags(flags);
+      _debugView.readyEvent(flags);
     });
 
     _sdk.on(_Event.CHANGED, flagInfo => {
       console.log("Event: CHANGED", flagInfo);
       _flagsView.setFlagInfo(flagInfo);
+      _debugView.updateEvent(flagInfo);
     });
 
     _sdk.on(_Event.DISCONNECTED, () => {
       console.log("Event: DISCONNECTED");
+      _debugView.disconnectedEvent();
     });
 
     _sdk.on(_Event.ERROR, () => {
-      console.log("Event: ERROR");
+      console.log("Event: ERROR", arguments);
+      _debugView.errorEvent();
     });
   }
 
@@ -163,17 +172,23 @@ var FF = function() {
 var FlagsView = function () {
   var $view = null;
 
-
   return {
     init : function(view) {
       $view = view.find('pre');
     },
     setFlags : function(flags) {
-
+      var log = [];
+      log.push((new Date).toISOString());
+      log.push("Event.READY");
+      log.push(JSON.stringify(flags));
+      log.push("\n");
+      
+      $view.append(log.join(" "));
     },
     setFlagInfo : function(flagInfo) {
       var log = [];
       log.push((new Date).toISOString());
+      log.push("Event.CHANGED");
       log.push(JSON.stringify(flagInfo));
       log.push("\n");
       
@@ -185,11 +200,41 @@ var FlagsView = function () {
 var DebugView = function() {
   var $view = null;
 
-
   return {
     init : function(view) {
-      $view = view;
+      $view = view.find('pre');
+    },
+    readyEvent : function(flags) {
+      var log = [];
+      log.push((new Date).toISOString());
+      log.push("Event.READY");
+      log.push(JSON.stringify(flags));
+      log.push("\n");
+      
+      $view.append(log.join(" "));
+    },
+    updateEvent : function(flagInfo) {
+      var log = [];
+      log.push((new Date).toISOString());
+      log.push("Event.CHANGED");
+      log.push(JSON.stringify(flagInfo));
+      log.push("\n");
+      
+      $view.append(log.join(" "));
+    },
+    disconnectedEvent : function() {
+      var log = [];
+      log.push((new Date).toISOString());
+      log.push("Event.DISCONNECTED");
+      $view.append(log.join(" "));
+    },
+    errorEvent : function() {
+      var log = [];
+      log.push((new Date).toISOString());
+      log.push("Event.ERROR");
+      $view.append(log.join(" "));
     }
+
   }
 }();
 
